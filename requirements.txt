@@ -1,0 +1,10 @@
+numpy>=1.6.0
+scipy>=0.9.0
+PyOpenGL>=3.0.1
+ipython>=0.10
+Pillow
+git+https://github.com/davidcox/freetype-py#egg=freetype-py
+git+https://github.com/davidcox/glumpy#egg=glumpy
+Pyro4
+mako
+pyopencl

@@ -1,0 +1,40 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from simple_camera_capture.controller import CaptureController
+from simple_camera_capture.gui import CaptureGUI
+import os
+import logging
+
+use_pyro = True
+
+
+def main():
+
+    os.environ['CFLAGS'] = '-arch x86_64'
+
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
+    controller = CaptureController()
+
+    if use_pyro:
+        import Pyro4
+        Pyro4.config.SERIALIZER = 'pickle'
+        Pyro4.config.SERIALIZERS_ACCEPTED.add('pickle')
+        daemon = Pyro4.Daemon()
+        controller_uri = daemon.register(controller)
+        ns = Pyro4.locateNS(port=50963)
+        ns.register('org.coxlab.camera_capture.controller', controller_uri)
+
+
+        controller.initialize()
+
+        daemon.requestLoop()
+    else:
+        gui = CaptureGUI(controller)
+        gui.mainloop()
+
+
+if __name__ == '__main__':
+    main()
