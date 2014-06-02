@@ -162,22 +162,7 @@ class CaptureController(object):
             self.camera_device = FakeCameraDevice(self.feature_finder, fake_file)
             self.camera_device.acquire_image()
 
-        # if self.use_simulated and self.camera_device == None:
-        #     logging.info('Failing over to Simulated Camera')
 
-        #     # use a POV-Ray simulated camera + a simpler feature finder
-        #     # that works with it
-        #     self.camera_device = POVRaySimulatedCameraDevice(
-        #         self.feature_finder,
-        #         None,
-        #         self.leds,
-        #         -370.0,
-        #         quiet=1,
-        #         image_width=160,
-        #         image_height=120,
-        #         )
-        #     self.camera_device.move_eye(array([10.0, -10.0, 0.0]))
-        #     self.camera_device.acquire_image()
 
         logging.info('Acquiring initial image')
 
@@ -365,6 +350,7 @@ class CaptureController(object):
             try:
 
                 self.camera_device.acquire_image()
+
                 new_features = \
                     self.camera_device.get_processed_image(self.features)
 
@@ -374,6 +360,8 @@ class CaptureController(object):
                     'frame_number' in features and
                     new_features['frame_number'] != features['frame_number']):
                     frame_number += 1
+                else:
+                    next
 
                 features = new_features
 

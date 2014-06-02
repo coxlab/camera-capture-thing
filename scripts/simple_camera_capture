@@ -5,7 +5,21 @@
 export PYRO_SERIALIZER=pickle
 export PYRO_SERIALIZERS_ACCEPTED=pickle
 
-LAUNCH_NS="python -Wignore -m Pyro4.naming --port=50963"
+
+port=$RANDOM
+quit=0
+
+while [ "$quit" -ne 1 ]; do
+  netstat -a | grep $port >> /dev/null
+  if [ $? -gt 0 ]; then
+    quit=1
+  else
+    port=`expr $port + 1`
+  fi
+done
+
+
+LAUNCH_NS="python -Wignore -m Pyro4.naming --port=$port"
 echo "Launching Pyro name server..."
 echo ${LAUNCH_NS}
 eval ${LAUNCH_NS} &
@@ -13,13 +27,13 @@ eval ${LAUNCH_NS} &
 sleep 2
 
 echo "Starting eyetracker"
-ENGINE="simple_camera_capture_engine"
+ENGINE="simple_camera_capture_engine $port"
 eval ${ENGINE} &
 
 sleep 5
 
 echo "Starting GUI"
-GUI="simple_camera_capture_gui"
+GUI="simple_camera_capture_gui $port"
 eval ${GUI}
 
 

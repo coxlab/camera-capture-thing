@@ -25,14 +25,22 @@ import PIL.Image
 
 import threading
 
+import time
+
 
 def acquire_continuously(camera, ff):
     while(1):
         frame = camera.getAndLockCurrentFrame()
-        im_array = (asarray(frame)).copy()
-        camera.releaseCurrentFrame()
+        timestamp = frame.timestamp / float(self.timestampFrequency)
 
-        ff.analyzeImage(im_array)
+        if camera.last_timestamp != timestamp:
+            im_array = (asarray(frame)).copy()
+            camera.frame_number += 1
+
+            ff.analyzeImage(im_array)
+            camera.last_timestamp = timestamp
+        
+        camera.releaseCurrentFrame()
 
 
 class ProsilicaCameraDevice:
@@ -52,6 +60,8 @@ class ProsilicaCameraDevice:
 
         self.acquire_continuously = 0
         self.acquisition_thread = None
+
+        self.last_timestamp = None
 
         self.feature_finder = _feature_finder
         #os.system('/sbin/route -n add 255.255.255.255 169.254.42.97')
@@ -112,39 +122,56 @@ class ProsilicaCameraDevice:
         if(self.camera == None):
             raise Exception, "No valid prosilica camera is in place"
 
-        frame = self.camera.getAndLockCurrentFrame()
-        self.im_array = (asarray(frame)).copy()
-        # We could convert the timestamp from clock cycles to seconds by dividing by the available timestampFrequency
-        # However, this could result in rounding errors. It might be easier to account for this in analysis scripts
-        # or pass along timestampFrequency
-        timestamp = frame.timestamp / float(self.timestampFrequency)
-        #timestamp = frame.timestamp
-        #print "Timestamp: ", timestamp
+
+        found_new_frame = False
+
+        while not found_new_frame:
+
+            frame = self.camera.getAndLockCurrentFrame()
+            # We could convert the timestamp from clock cycles to seconds by dividing by the available timestampFrequency
+            # However, this could result in rounding errors. It might be easier to account for this in analysis scripts
+            # or pass along timestampFrequency
+            timestamp = frame.timestamp # / float(self.timestampFrequency)
+            print timestamp
+
+            if timestamp != self.last_timestamp:
+
+
+                self.im_array = (asarray(frame)).copy()
+
+                
+                #timestamp = frame.timestamp
+                #print "Timestamp: ", timestamp
+                self.frame_number += 1
+
+                # start the analysis process
+
+                #self.feature_finder.analyze_image(self.im_array.copy(), None)
+
+                # push the image to the feature analyzer
+                self.feature_finder.analyze_image(self.im_array.astype(float32), { "frame_number" : self.frame_number, "timestamp" : timestamp})
+            
+                self.last_timestamp = timestamp
+
+                found_new_frame = True
+            else:
+
+                print 'skipping repeat frame'
+
         self.camera.releaseCurrentFrame()
-        self.frame_number += 1
 
-        # start the analysis process
-
-        #self.feature_finder.analyze_image(self.im_array.copy(), None)
-
-        # push the image to the feature analyzer
-        self.feature_finder.analyze_image(self.im_array.astype(float32), {"pupil_position":self.pupil_position, "cr_position": self.cr_position, "frame_number" : self.frame_number, "timestamp" : timestamp})
         return
 
 
 
     def get_processed_image(self, guess = None):
 
+        time.sleep(0.016)
+
         features = self.feature_finder.get_result()
 
         if(features == None):
             return features
-
-        if(features.has_key('pupil_position')):
-            self.pupil_position = features['pupil_position']
-
-        if(features.has_key('cr_position')):
-            self.cr_position = features['cr_position']
 
         self.nframes_done += 1
         #features["frame_number"] = self.frame_number

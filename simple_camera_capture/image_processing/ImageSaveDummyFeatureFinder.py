@@ -4,6 +4,7 @@ import os.path
 import os
 import uuid
 import time
+import numpy as np
 
 
 class ImageSaveDummyFeatureFinder(FeatureFinder):
@@ -32,13 +33,13 @@ class ImageSaveDummyFeatureFinder(FeatureFinder):
         self.im_array = image
 
         if self.real_ff is None:
-            return {}
+            return
         else:
             return self.real_ff.analyze_image(image, guess, **kwargs)
 
     def get_result(self):
         if self.real_ff is None:
-            return {'im_array': self.im_array}
+            return {'im_array': self.im_array,'im_shape': self.im_array.shape}
         else:
             return self.real_ff.get_result()
 
