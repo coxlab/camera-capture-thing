@@ -697,14 +697,13 @@ def PvUtilityColorInterpolate(*args):
   return _prosilica_cpp.PvUtilityColorInterpolate(*args)
 PvUtilityColorInterpolate = _prosilica_cpp.PvUtilityColorInterpolate
 FRAME_MULTI_BUFFER_SIZE = _prosilica_cpp.FRAME_MULTI_BUFFER_SIZE
-HIGH_WATER_MARK = _prosilica_cpp.HIGH_WATER_MARK
+LOW_WATER_MARK = _prosilica_cpp.LOW_WATER_MARK
 FRAME_PENDING = _prosilica_cpp.FRAME_PENDING
 FRAME_READY = _prosilica_cpp.FRAME_READY
 FRAME_LOCKED = _prosilica_cpp.FRAME_LOCKED
 FRAME_DONE = _prosilica_cpp.FRAME_DONE
 FRAME_CONTEXT_CAMERA = _prosilica_cpp.FRAME_CONTEXT_CAMERA
 FRAME_CONTEXT_INDEX = _prosilica_cpp.FRAME_CONTEXT_INDEX
-FRAME_CONTEXT_SOBEL = _prosilica_cpp.FRAME_CONTEXT_SOBEL
 
 def frame_callback(*args):
   return _prosilica_cpp.frame_callback(*args)
@@ -735,11 +734,10 @@ class ProsilicaCamera(_object):
     def waitForReadyFrames(self): return _prosilica_cpp.ProsilicaCamera_waitForReadyFrames(self)
     def broadcastFrameReady(self): return _prosilica_cpp.ProsilicaCamera_broadcastFrameReady(self)
     def getAndLockCurrentFrame(self): return _prosilica_cpp.ProsilicaCamera_getAndLockCurrentFrame(self)
+    def queueCameraFrame(self, *args): return _prosilica_cpp.ProsilicaCamera_queueCameraFrame(self, *args)
     def releaseCurrentFrame(self): return _prosilica_cpp.ProsilicaCamera_releaseCurrentFrame(self)
     def startContinuousCapture(self): return _prosilica_cpp.ProsilicaCamera_startContinuousCapture(self)
-    def queueFrame(self, *args): return _prosilica_cpp.ProsilicaCamera_queueFrame(self, *args)
     def frameCompleted(self, *args): return _prosilica_cpp.ProsilicaCamera_frameCompleted(self, *args)
-    def captureOnePvFrame(self): return _prosilica_cpp.ProsilicaCamera_captureOnePvFrame(self)
     __swig_getmethods__["initialize"] = lambda x: _prosilica_cpp.ProsilicaCamera_initialize
     if _newclass:initialize = staticmethod(_prosilica_cpp.ProsilicaCamera_initialize)
     __swig_getmethods__["getNumberOfCameras"] = lambda x: _prosilica_cpp.ProsilicaCamera_getNumberOfCameras

@@ -11,6 +11,9 @@ use_pyro = True
 
 def main():
 
+
+    import time; time.sleep(30)
+
     port = int(sys.argv[1])
 
     os.environ['CFLAGS'] = '-arch x86_64'

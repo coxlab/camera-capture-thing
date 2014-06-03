@@ -8,4 +8,5 @@
 # from FrugalCompositeFeatureFinder import *
 from SimpleFeatureFinder import *
 from ImageSaveDummyFeatureFinder import *
+from ImageDumper import *
 # from CLSubpixelStarburstFeatureFinder import *

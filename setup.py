@@ -23,7 +23,8 @@ prosilica_static_libs = [os.path.join(prosilica_sdk_lib, x) for x in
                          ['libImagelib.a', 'libPvAPI.a']]
 
 if sys.platform == 'darwin':
-    extra_link_args = ['-framework', 'CoreFoundation']
+    extra_link_args = ['-framework', 'CoreFoundation', '-flat_namespace', '-lstdc++']
+    extra_compile_args = ['-flat_namespace', '-lstdc++']
 else:
     extra_link_args = []
 
@@ -32,6 +33,7 @@ prosilica_module = Extension(
     define_macros=[('_x64', '1'), ('_OSX', '1')],
     include_dirs=['/usr/local/include', prosilica_sdk_inc] + numpy_inc_dirs,
     libraries=['m', 'c', 'PvAPI', 'Imagelib'],
+    extra_compile_args=extra_compile_args,
     extra_link_args=extra_link_args,
     library_dirs=['/usr/local/lib', prosilica_sdk_lib],
     sources=prosilica_src_paths,
@@ -42,7 +44,7 @@ setup(
     version='dev',
     scripts=['scripts/simple_camera_capture', 'scripts/simple_camera_capture_engine', 'scripts/simple_camera_capture_gui'],
     include_package_data=True,
-    ext_modules=[prosilica_module],
+    # ext_modules=[prosilica_module],
     packages=find_packages(exclude=['tests', 'scripts']),
     data_files=[(os.path.expanduser('~/.eyetracker'),
                 ['config/config.ini'])]

@@ -27,7 +27,7 @@ eval ${LAUNCH_NS} &
 sleep 2
 
 echo "Starting eyetracker"
-ENGINE="simple_camera_capture_engine $port"
+ENGINE="simple_camera_capture_engine $port" # 2> /dev/null"
 eval ${ENGINE} &
 
 sleep 5

@@ -96,7 +96,7 @@ endif
 PROSILICA_STATIC_LIBS	= -Bstatic $(PROSILICA_LIB_DIR)/libImagelib.a $(PROSILICA_LIB_DIR)/libPvAPI.a
 
 ## final compilation flags
-CFLAGS	= $(OPT) $(FLAGS) -g -Wall -I$(PROSILICA_INC_DIR) -I$(INC_DIR)  -I$(NUMPY_INC) -I$(PYTHON_INC) -D_REENTRANT $(EXTRA) -flat_namespace -lstdc++
+CFLAGS	= $(OPT) $(FLAGS) -g -Wall -I$(PROSILICA_INC_DIR) -I$(INC_DIR)  -I$(NUMPY_INC) -I$(PYTHON_INC) -D_REENTRANT $(EXTRA) -flat_namespace
 #CFLAGS	= $(OPT) $(FLAGS) -g -Wall -I$(PROSILICA_INC_DIR) -I$(INC_DIR) -I$(PYTHON_INC) -D_REENTRANT $(EXTRA)
 
 # ifeq ($(OS), OSX)

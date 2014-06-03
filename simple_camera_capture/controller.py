@@ -14,7 +14,7 @@ from scipy import *
 
 from simple_camera_capture.util import *
 
-from simple_camera_capture.image_processing import *
+from simple_camera_capture.image_processing import ImageDumper
 from simple_camera_capture.camera import *
 from simple_camera_capture.led import *
 from simple_camera_capture.motion import *
@@ -25,8 +25,6 @@ from Queue import Empty, Full
 # load settings
 loaded_config = load_config_file('~/.simple_camera_capture/config.ini')
 global_settings.update(loaded_config)
-
-print global_settings
 
 # boost.python wrapper for a MWorks interprocess conduit, if you're into
 # that sort of thing
@@ -51,14 +49,15 @@ class CaptureController(object):
 
     def __init__(self):
 
-        self.test_binning = 3
-
+        # motion control settings
         self.x_set = 0.5
         self.y_set = 0.5
         self.r_set = 0.5
 
         self.zoom_step = 20.
         self.focus_step = 20.
+        self.no_powerzoom = False
+
 
         self.x_current = 0.0
         self.y_current = 0.0
@@ -69,36 +68,32 @@ class CaptureController(object):
         self.zoom_current = 0.0
         self.focus_current = 0.0
 
-        self.d_cntr_set = 0.0
-        self.r_cntr_set = 0.0
 
-        self.r_2align_pup_cr = None
-        self.pupil_cr_diff = None
-
+        # led settings
         self.IsetCh1 = 0.0
         self.IsetCh2 = 0.0
         self.IsetCh3 = 0.0
         self.IsetCh4 = 0.0
 
+        # camera settings
+        self.test_binning = 3
         self.binning_factor = 1
         self.gain_factor = 1.
 
-        # Added by DZ to deal with rigs without power zoom and focus
-        self.no_powerzoom = False
-
-        self.feature_finder = None
-
         self.camera_device = None
+
+        # MWorks communication
         self.mw_conduit = None
 
-        self.canvas_update_timer = None
 
+        # UI
+        self.canvas_update_timer = None
         self.ui_queue = Queue(5)
+
 
         self.camera_locked = 0
         self.continuously_acquiring = 0
 
-        self.calibrating = False
 
         self.enable_save_to_disk = global_settings.get('enable_save_to_disk', False)
         print "Save to disk?:", self.enable_save_to_disk
@@ -116,64 +111,67 @@ class CaptureController(object):
         # -------------------------------------------------------------
         logging.info('Initializing LED Control Subsystem')
 
-        if self.use_simulated:
+        if not self.use_simulated:
+            try:
+                self.leds = MightexLEDController('169.254.0.9', 8006)
+                self.leds.connect()
+            except:
+                self.leds = None
+
+        if self.use_simulated or self.leds is None:
             self.leds = SimulatedLEDController(4)
-        else:
-            self.leds = MightexLEDController('169.254.0.9', 8006)
-            self.leds.connect()
 
         # -------------------------------------------------------------
-        # Camera and Image Processing
+        # Camera
         # -------------------------------------------------------------
 
-        logging.info('Initializing Image Processing')
-
-        self.features = None
-        self.frame_rates = []
-
-        nworkers = 0
-
-        print('controller process: %d' % os.getpid())
-
-
-        if self.enable_save_to_disk and self.image_save_dir is not None:
-            logging.info('Enabling save to disk...')
-            self.feature_finder = ImageSaveDummyFeatureFinder(self.feature_finder, self.image_save_dir)
-        else:
-            logging.warning('Data will not be saved to disk.')
+        logging.info('Initializing Camera')
 
         try:
-            logging.info('Try the camera')
-            if not self.use_file_for_cam:# and not self.use_simulated:
+            if not self.use_file_for_cam:
                 logging.info('Connecting to Camera...')
-                self.camera_device = ProsilicaCameraDevice(self.feature_finder)
+                self.camera_device = ProsilicaCameraDevice()
 
                 self.binning = 4
                 self.gain = 1
+
         except Exception, e:
                 print "Error connecting to camera:", e.message
                 self.camera_device = None
 
-        if self.use_file_for_cam:
+        # if that didn't work, build a fake device
+        if self.use_file_for_cam or self.camera_device is None:
             fake_file = global_settings.get('fake_cam_file', None)
             if fake_file is None:
                 logging.error('No valid fake camera file specified')
 
-            self.camera_device = FakeCameraDevice(self.feature_finder, fake_file)
+            self.camera_device = FakeCameraDevice(fake_file)
             self.camera_device.acquire_image()
 
 
-
-        logging.info('Acquiring initial image')
+        logging.info('Starting continuous camera acquisition')
 
         self.start_continuous_acquisition()
 
         self.ui_interval = 1. / 20.
         self.start_time = time.time()
         self.last_time = self.start_time
-
         self.conduit_fps = 0.
 
+
+        # -------------------------------------------------------------
+        # Image "dumper" (put images to file system)
+        # -------------------------------------------------------------
+
+        if self.image_save_dir:
+            self.image_dumper = ImageDumper(self.image_save_dir)
+        else:
+            self.image_dumper = None
+
+
+        # -------------------------------------------------------------
+        # Set up the MW communications
+        # -------------------------------------------------------------
 
         if mw_enabled:
             logging.info('Instantiating mw conduit')
@@ -196,15 +194,6 @@ class CaptureController(object):
             logging.warning('No conduit')
 
     def release(self):
-        #print "Controller has %i refs" % sys.getrefcount(self)
-        #self.camera_device.release()
-        #print "Controller has %i refs" % sys.getrefcount(self)
-        #self.stages.release()
-        #print "Controller has %i refs" % sys.getrefcount(self)
-        #self.zoom_and_focus.release()
-        # print "Controller has %i refs" % sys.getrefcount(self)
-        # self.calibrator.release()
-        # print "Controller has %i refs" % sys.getrefcount(self)
         return
 
     def __del__(self):
@@ -213,12 +202,13 @@ class CaptureController(object):
 
     def shutdown(self):
 
+        # Put on the brakes
+
         if self.leds is not None:
             logging.info('Turning off LEDs')
             for i in xrange(4):
                 self.leds.turn_off(i)
             self.leds = None
-            # self.leds.shutdown()
 
         self.continuously_acquiring = False
         self.stop_continuous_acquisition()
@@ -233,15 +223,14 @@ class CaptureController(object):
         # self.camera = None
         self.camera_device = None
 
-        if hasattr(self.feature_finder, 'stop_threads'):
-            self.feature_finder.stop_threads()
-
         return True
 
     def simple_alert(self, title, message):
         logging.info(message)
 
     def dump_info_to_conduit(self):
+
+        # TODO
         print("Dumping info to conduit")
         try:
             if not mw_enabled:
@@ -257,12 +246,14 @@ class CaptureController(object):
             print("Failed to dump info: %s" % e)
             return
 
+
     def start_continuous_acquisition(self):
         self.dump_info_to_conduit()
 
         logging.info('Starting continuous acquisition')
         self.continuously_acquiring = 1
 
+        # Run an infinite camera acquisition loop in another thread
         t = lambda: self.continuously_acquire_images()
         self.acq_thread = threading.Thread(target=t)
         self.acq_thread.start()
@@ -329,7 +320,7 @@ class CaptureController(object):
     # so that the UI can have at them
     def continuously_acquire_images(self):
 
-        logging.info('Started continuously acquiring')
+        logging.info('Started continuously acquiring...')
 
         frame_rate = -1.
         frame_number = 0
@@ -349,10 +340,7 @@ class CaptureController(object):
 
             try:
 
-                self.camera_device.acquire_image()
-
-                new_features = \
-                    self.camera_device.get_processed_image(self.features)
+                new_features = self.camera_device.acquire_image()
 
                 if (new_features.__class__ == dict and
                     features.__class__ == dict and
@@ -368,8 +356,8 @@ class CaptureController(object):
                 if frame_number % check_interval == 0:
                     toc = time.time() - tic
                     frame_rate = check_interval / toc
-                    logging.info('Real frame rate: %f' % (check_interval / toc))
-                    logging.info('Real frame time: %f' % (toc / check_interval))
+                    # logging.info('Real frame rate: %f' % (check_interval / toc))
+                    # logging.info('Real frame time: %f' % (toc / check_interval))
                     if features.__class__ == dict and 'frame_number' in features:
                         logging.info('frame number = %d'
                                      % features['frame_number'])

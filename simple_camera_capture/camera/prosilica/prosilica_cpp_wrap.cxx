@@ -13735,6 +13735,36 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_ProsilicaCamera_queueCameraFrame(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  ProsilicaCamera *arg1 = (ProsilicaCamera *) 0 ;
+  int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:ProsilicaCamera_queueCameraFrame",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_ProsilicaCamera, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ProsilicaCamera_queueCameraFrame" "', argument " "1"" of type '" "ProsilicaCamera *""'"); 
+  }
+  arg1 = reinterpret_cast< ProsilicaCamera * >(argp1);
+  ecode2 = SWIG_AsVal_int(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "ProsilicaCamera_queueCameraFrame" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  (arg1)->queueCameraFrame(arg2);
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_ProsilicaCamera_releaseCurrentFrame(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   ProsilicaCamera *arg1 = (ProsilicaCamera *) 0 ;
@@ -13778,36 +13808,6 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_ProsilicaCamera_queueFrame(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  ProsilicaCamera *arg1 = (ProsilicaCamera *) 0 ;
-  int arg2 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int val2 ;
-  int ecode2 = 0 ;
-  PyObject * obj0 = 0 ;
-  PyObject * obj1 = 0 ;
-  
-  if (!PyArg_ParseTuple(args,(char *)"OO:ProsilicaCamera_queueFrame",&obj0,&obj1)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_ProsilicaCamera, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ProsilicaCamera_queueFrame" "', argument " "1"" of type '" "ProsilicaCamera *""'"); 
-  }
-  arg1 = reinterpret_cast< ProsilicaCamera * >(argp1);
-  ecode2 = SWIG_AsVal_int(obj1, &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "ProsilicaCamera_queueFrame" "', argument " "2"" of type '" "int""'");
-  } 
-  arg2 = static_cast< int >(val2);
-  (arg1)->queueFrame(arg2);
-  resultobj = SWIG_Py_Void();
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
 SWIGINTERN PyObject *_wrap_ProsilicaCamera_frameCompleted(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   ProsilicaCamera *arg1 = (ProsilicaCamera *) 0 ;
@@ -13832,28 +13832,6 @@ SWIGINTERN PyObject *_wrap_ProsilicaCamera_frameCompleted(PyObject *SWIGUNUSEDPA
   arg2 = reinterpret_cast< tPvFrame * >(argp2);
   (arg1)->frameCompleted(arg2);
   resultobj = SWIG_Py_Void();
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_ProsilicaCamera_captureOnePvFrame(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  ProsilicaCamera *arg1 = (ProsilicaCamera *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  PyObject * obj0 = 0 ;
-  tPvFrame result;
-  
-  if (!PyArg_ParseTuple(args,(char *)"O:ProsilicaCamera_captureOnePvFrame",&obj0)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_ProsilicaCamera, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ProsilicaCamera_captureOnePvFrame" "', argument " "1"" of type '" "ProsilicaCamera *""'"); 
-  }
-  arg1 = reinterpret_cast< ProsilicaCamera * >(argp1);
-  result = (arg1)->captureOnePvFrame();
-  resultobj = SWIG_NewPointerObj((new tPvFrame(static_cast< const tPvFrame& >(result))), SWIGTYPE_p_tPvFrame, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
   return NULL;
@@ -14276,11 +14254,10 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"ProsilicaCamera_waitForReadyFrames", _wrap_ProsilicaCamera_waitForReadyFrames, METH_VARARGS, NULL},
 	 { (char *)"ProsilicaCamera_broadcastFrameReady", _wrap_ProsilicaCamera_broadcastFrameReady, METH_VARARGS, NULL},
 	 { (char *)"ProsilicaCamera_getAndLockCurrentFrame", _wrap_ProsilicaCamera_getAndLockCurrentFrame, METH_VARARGS, NULL},
+	 { (char *)"ProsilicaCamera_queueCameraFrame", _wrap_ProsilicaCamera_queueCameraFrame, METH_VARARGS, NULL},
 	 { (char *)"ProsilicaCamera_releaseCurrentFrame", _wrap_ProsilicaCamera_releaseCurrentFrame, METH_VARARGS, NULL},
 	 { (char *)"ProsilicaCamera_startContinuousCapture", _wrap_ProsilicaCamera_startContinuousCapture, METH_VARARGS, NULL},
-	 { (char *)"ProsilicaCamera_queueFrame", _wrap_ProsilicaCamera_queueFrame, METH_VARARGS, NULL},
 	 { (char *)"ProsilicaCamera_frameCompleted", _wrap_ProsilicaCamera_frameCompleted, METH_VARARGS, NULL},
-	 { (char *)"ProsilicaCamera_captureOnePvFrame", _wrap_ProsilicaCamera_captureOnePvFrame, METH_VARARGS, NULL},
 	 { (char *)"ProsilicaCamera_initialize", _wrap_ProsilicaCamera_initialize, METH_VARARGS, NULL},
 	 { (char *)"ProsilicaCamera_getNumberOfCameras", _wrap_ProsilicaCamera_getNumberOfCameras, METH_VARARGS, NULL},
 	 { (char *)"ProsilicaCamera_getAndLockCurrentFrame_NoGIL", _wrap_ProsilicaCamera_getAndLockCurrentFrame_NoGIL, METH_VARARGS, NULL},
@@ -15216,14 +15193,13 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "ePvFlagConst",SWIG_From_int(static_cast< int >(ePvFlagConst)));
   SWIG_Python_SetConstant(d, "__ePvFlag_force_32",SWIG_From_int(static_cast< int >(__ePvFlag_force_32)));
   SWIG_Python_SetConstant(d, "FRAME_MULTI_BUFFER_SIZE",SWIG_From_int(static_cast< int >(5)));
-  SWIG_Python_SetConstant(d, "HIGH_WATER_MARK",SWIG_From_int(static_cast< int >(2)));
+  SWIG_Python_SetConstant(d, "LOW_WATER_MARK",SWIG_From_int(static_cast< int >(3)));
   SWIG_Python_SetConstant(d, "FRAME_PENDING",SWIG_From_int(static_cast< int >(0)));
   SWIG_Python_SetConstant(d, "FRAME_READY",SWIG_From_int(static_cast< int >(1)));
   SWIG_Python_SetConstant(d, "FRAME_LOCKED",SWIG_From_int(static_cast< int >(2)));
   SWIG_Python_SetConstant(d, "FRAME_DONE",SWIG_From_int(static_cast< int >(3)));
   SWIG_Python_SetConstant(d, "FRAME_CONTEXT_CAMERA",SWIG_From_int(static_cast< int >(0)));
   SWIG_Python_SetConstant(d, "FRAME_CONTEXT_INDEX",SWIG_From_int(static_cast< int >(1)));
-  SWIG_Python_SetConstant(d, "FRAME_CONTEXT_SOBEL",SWIG_From_int(static_cast< int >(2)));
 #if PY_VERSION_HEX >= 0x03000000
   return m;
 #else
