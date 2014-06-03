@@ -40,7 +40,6 @@ echo "Starting GUI"
 GUI="simple_camera_capture_gui $port"
 eval ${GUI}
 
-sleep 2
 echo "Done."
 
 NS_PID=`ps ax | grep -e "Pyro4.naming" | grep -v grep | awk '{print $1}'`

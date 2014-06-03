@@ -260,82 +260,105 @@ class CaptureGUI:
             size=(200, 180),
             )
 
+
         self.cam_bar.add_var(
-            'binning',
-            label='binning',
+            'framerate',
+            label='frame rate',
+            vtype=atb.TW_TYPE_FLOAT,
+            min=1,
+            max=200,
+            step=0.1,
+            readonly=True,
+            getter=lambda: float(c.get_frame_rate())
+        )        
+
+        self.cam_bar.add_var(
+            'binningx',
+            label='binning X',
             vtype=atb.TW_TYPE_UINT32,
             min=1,
             max=16,
             step=1,
-            target=c,
-            attr='binning',
+            getter=lambda: c.get_camera_attribute('BinningX'),
+            setter=lambda x: c.set_camera_attribute('BinningX', int(x)),
             )
 
         self.cam_bar.add_var(
-            'gain',
-            label='gain',
+            'binningy',
+            label='binning Y',
             vtype=atb.TW_TYPE_UINT32,
             min=1,
             max=16,
             step=1,
-            target=c,
-            attr='gain',
+            getter=lambda: c.get_camera_attribute('BinningY'),
+            setter=lambda x: c.set_camera_attribute('BinningY', int(x)),
             )
 
-        self.cam_bar.add_var(
-            'exposure',
-            label='exposure',
-            vtype=atb.TW_TYPE_UINT32,
-            min=5000,
-            max=30000,
-            step=1000,
-            target=c,
-            attr='exposure',
-            )
+        # self.cam_bar.add_var(
+        #     'gain',
+        #     label='gain',
+        #     vtype=atb.TW_TYPE_UINT32,
+        #     min=1,
+        #     max=16,
+        #     step=1,
+        #     target=c,
+        #     attr='gain',
+        #     )
 
-        self.cam_bar.add_var(
-            'ROI/roi_width',
-            label='width',
-            vtype=atb.TW_TYPE_UINT32,
-            min=1,
-            max=800,
-            step=1,
-            target=c,
-            attr='roi_width',
-            )
+        # self.cam_bar.add_var(
+        #     'exposure',
+        #     label='exposure',
+        #     vtype=atb.TW_TYPE_UINT32,
+        #     min=5000,
+        #     max=30000,
+        #     step=1000,
+        #     target=c,
+        #     attr='exposure',
+        #     )
 
-        self.cam_bar.add_var(
-            'ROI/roi_height',
-            label='height',
-            vtype=atb.TW_TYPE_UINT32,
-            min=1,
-            max=800,
-            step=1,
-            target=c,
-            attr='roi_height',
-            )
+        # self.cam_bar.add_var(
+        #     'ROI/roi_width',
+        #     label='width',
+        #     vtype=atb.TW_TYPE_UINT32,
+        #     min=1,
+        #     max=800,
+        #     step=1,
+        #     target=c,
+        #     attr='roi_width',
+        #     )
 
-        self.cam_bar.add_var(
-            'ROI/roi_offset_x',
-            label='offset x',
-            vtype=atb.TW_TYPE_UINT32,
-            min=0,
-            max=800,
-            step=1,
-            target=c,
-            attr='roi_offset_x',
-            )
+        # self.cam_bar.add_var(
+        #     'ROI/roi_height',
+        #     label='height',
+        #     vtype=atb.TW_TYPE_UINT32,
+        #     min=1,
+        #     max=800,
+        #     step=1,
+        #     target=c,
+        #     attr='roi_height',
+        #     )
 
-        self.cam_bar.add_var(
-            'ROI/roi_offset_y',
-            label='offset y',
-            vtype=atb.TW_TYPE_UINT32,
-            min=0,
-            max=800,
-            step=1,
-            target=c,
-            attr='roi_offset_y',
-            )
+        # self.cam_bar.add_var(
+        #     'ROI/roi_offset_x',
+        #     label='offset x',
+        #     vtype=atb.TW_TYPE_UINT32,
+        #     min=0,
+        #     max=800,
+        #     step=1,
+        #     target=c,
+        #     attr='roi_offset_x',
+        #     )
+
+        # self.cam_bar.add_var(
+        #     'ROI/roi_offset_y',
+        #     label='offset y',
+        #     vtype=atb.TW_TYPE_UINT32,
+        #     min=0,
+        #     max=800,
+        #     step=1,
+        #     target=c,
+        #     attr='roi_offset_y',
+        #     )
 
         # Event Handlers
         def on_init():

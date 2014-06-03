@@ -70,7 +70,6 @@ class CaptureController(object):
         self.zoom_current = 0.0
         self.focus_current = 0.0
 
-
         # led settings
         self.IsetCh1 = 0.0
         self.IsetCh2 = 0.0
@@ -86,6 +85,7 @@ class CaptureController(object):
 
         self.camera_locked = 0
         self.continuously_acquiring = 0
+        self.frame_rate = 0
 
 
         # MWorks communication, if available
@@ -96,7 +96,9 @@ class CaptureController(object):
         self.canvas_update_timer = None
         self.ui_queue = queue.Queue(5)
 
-
+        self.target_ui_update_interval = 1. / 60.
+        self.last_ui_get_time = time.time()
+        self.last_ui_put_time = time.time()
 
         self.enable_save_to_disk = global_settings.get('enable_save_to_disk', False)
         logging.info("Save to disk?: %d" % self.enable_save_to_disk)
@@ -267,6 +269,18 @@ class CaptureController(object):
         self.acq_thread.join()
 
     def ui_queue_put(self, item):
+
+        now = time.time()
+        interval = now - self.last_ui_put_time
+
+        if interval < self.target_ui_update_interval:
+            print "\n", interval
+            print self.target_ui_update_interval
+            return
+        else:
+            print "\n", interval, "!"
+            # pass
+
         if self.ui_queue.full():
             try:
                 self.ui_queue.get_nowait()
@@ -274,12 +288,21 @@ class CaptureController(object):
                 return
         try:
             self.ui_queue.put_nowait(item)
+            self.last_ui_put_time = now
         except queue.Full:
             return
 
     def ui_queue_get(self):
+
+        now = time.time()
+        interval = now - self.last_ui_get_time
+
+        if interval < self.target_ui_update_interval:
+            return None
+
         try:
             f = self.ui_queue.get_nowait()
+            self.last_ui_get_time = now
             return f
         except queue.Empty:
             return None
@@ -322,6 +345,9 @@ class CaptureController(object):
         except:
             pass
 
+    def get_frame_rate(self):
+        return self.frame_rate
+
     # a method to actually run the camera
     # it will push images into a Queue object (in a non-blocking fashion)
     # so that the UI can have at them
@@ -329,7 +355,7 @@ class CaptureController(object):
 
         logging.info('Started continuously acquiring...')
 
-        frame_rate = -1.
+        self.frame_rate = -1.
         frame_number = 0
         tic = time.time()
         features = None
@@ -337,7 +363,6 @@ class CaptureController(object):
         gaze_elevation = 0.0
         calibration_status = 0
 
-        self.last_ui_put_time = time.time()
         self.last_conduit_time = time.time()
 
         check_interval = 100
@@ -364,7 +389,7 @@ class CaptureController(object):
 
                 if frame_number % check_interval == 0:
                     toc = time.time() - tic
-                    frame_rate = check_interval / toc
+                    self.frame_rate = check_interval / toc
                     # logging.info('Real frame rate: %f' % (check_interval / toc))
                     # logging.info('Real frame time: %f' % (toc / check_interval))
                     # if features.__class__ == dict and 'frame_number' in features:
@@ -373,7 +398,7 @@ class CaptureController(object):
 
                     tic = time.time()
 
-                sys.stdout.write('frame rate: %f' % frame_rate)
+                sys.stdout.write('frame rate: %f' % self.frame_rate)
 
                 if features == None:
                     logging.error('No features found... sleeping')
@@ -440,10 +465,6 @@ class CaptureController(object):
                 #         if self.mw_conduit != None:
                 #             pass
 
-                    # set values for the bindings GUI
-                    if frame_number % check_interval == 0:
-
-                        self.frame_rate = frame_rate
 
                     # FIXME I cannot do this here as it will fubar the serial communication with the ESP
                     #if frame_number % info_interval == 0:
@@ -457,14 +478,8 @@ class CaptureController(object):
                 for f in formatted[2]:
                     print f
 
-            if time.time() - self.last_ui_put_time > self.ui_interval:
-                # reduced_features = {}
-                # for f in ['im_array', 'pupil_position', 'cr_position', 'pupil_radius']:
-                #     if f in features:
-                #         reduced_features[f] = features[f]
-                self.ui_queue_put(features)
-                #self.ui_queue_put(features)
-                self.last_ui_put_time = time.time()
+            self.ui_queue_put(features)
+                
                 
 
         self.camera_locked = 0
