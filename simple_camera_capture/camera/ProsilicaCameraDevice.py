@@ -99,15 +99,12 @@ class ProsilicaCameraDevice:
 
         found_new_frame = False
 
-        print 'get-and-lock'
         frame = self.camera.getAndLockCurrentFrame()
 
         timestamp = frame.timestamp # / float(self.timestampFrequency)
         im_array = (asarray(frame)).copy()
 
-        print 'release'
         self.camera.releaseCurrentFrame()
-        print 'released'
 
 
         if timestamp != self.last_timestamp:
@@ -115,7 +112,7 @@ class ProsilicaCameraDevice:
             self.last_timestamp = timestamp
 
 
-        return {'im_array': im_array, 'timestamp': timestamp }
+        return {'im_array': im_array, 'timestamp': timestamp, 'frame_number': self.frame_number }
 
 
 

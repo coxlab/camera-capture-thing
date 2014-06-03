@@ -6,6 +6,10 @@ export PYRO_SERIALIZER=pickle
 export PYRO_SERIALIZERS_ACCEPTED=pickle
 
 
+# Find a random open port to which to attach the Pyro nameserver
+# this is advantageous so that we don't have to wait around for the
+# the port to be released after closing
+
 port=$RANDOM
 quit=0
 
@@ -26,7 +30,7 @@ eval ${LAUNCH_NS} &
 
 sleep 2
 
-echo "Starting eyetracker"
+echo "Starting capture engine"
 ENGINE="simple_camera_capture_engine $port" # 2> /dev/null"
 eval ${ENGINE} &
 
@@ -35,7 +39,6 @@ sleep 5
 echo "Starting GUI"
 GUI="simple_camera_capture_gui $port"
 eval ${GUI}
-
 
 sleep 2
 echo "Done."

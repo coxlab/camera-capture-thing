@@ -25,7 +25,7 @@ if __name__ == '__main__':
         frame = cam.getAndLockCurrentFrame()
         cam.releaseCurrentFrame()
         t = time.time()
-        print 'delta: %f' % (t - last_time)
+        # print 'delta: %f' % (t - last_time)
         last_time = t
 
     cam.endCapture()

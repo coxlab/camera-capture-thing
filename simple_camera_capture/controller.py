@@ -20,7 +20,10 @@ from simple_camera_capture.led import *
 from simple_camera_capture.motion import *
 from settings import global_settings
 
-from Queue import Empty, Full
+try:
+    import queue
+except ImportError:
+    import Queue as queue
 
 # load settings
 loaded_config = load_config_file('~/.simple_camera_capture/config.ini')
@@ -39,7 +42,7 @@ if global_settings.get('enable_mw_conduit', True):
         TRACKER_INFO = 101
         mw_enabled = True
     except Exception, e:
-        print 'Unable to load MW conduit: %s' % e
+        logging.warning('Unable to load MW conduit: %s' % e)
 
 
 
@@ -57,7 +60,6 @@ class CaptureController(object):
         self.zoom_step = 20.
         self.focus_step = 20.
         self.no_powerzoom = False
-
 
         self.x_current = 0.0
         self.y_current = 0.0
@@ -82,21 +84,22 @@ class CaptureController(object):
 
         self.camera_device = None
 
-        # MWorks communication
+        self.camera_locked = 0
+        self.continuously_acquiring = 0
+
+
+        # MWorks communication, if available
         self.mw_conduit = None
 
 
         # UI
         self.canvas_update_timer = None
-        self.ui_queue = Queue(5)
+        self.ui_queue = queue.Queue(5)
 
-
-        self.camera_locked = 0
-        self.continuously_acquiring = 0
 
 
         self.enable_save_to_disk = global_settings.get('enable_save_to_disk', False)
-        print "Save to disk?:", self.enable_save_to_disk
+        logging.info("Save to disk?: %d" % self.enable_save_to_disk)
         self.image_save_dir = global_settings.get('data_dir', None)
 
         self.use_simulated = global_settings.get('use_simulated', False)
@@ -136,7 +139,7 @@ class CaptureController(object):
                 self.gain = 1
 
         except Exception, e:
-                print "Error connecting to camera:", e.message
+                logging.warning("Error connecting to camera: %s" % e.message)
                 self.camera_device = None
 
         # if that didn't work, build a fake device
@@ -153,7 +156,7 @@ class CaptureController(object):
 
         self.start_continuous_acquisition()
 
-        self.ui_interval = 1. / 20.
+        self.ui_interval = 1. / 10000.
         self.start_time = time.time()
         self.last_time = self.start_time
         self.conduit_fps = 0.
@@ -176,16 +179,16 @@ class CaptureController(object):
         if mw_enabled:
             logging.info('Instantiating mw conduit')
             self.mw_conduit = mw_conduit.IPCServerConduit('cobra1')
-            print 'conduit = %s' % self.mw_conduit
+            # print 'conduit = %s' % self.mw_conduit
         else:
             self.mw_conduit = None
 
         if self.mw_conduit != None:
-            print 'Initializing conduit...'
+            logging.info('Initializing conduit...')
             initialized = self.mw_conduit.initialize()
-            print initialized
+            # print initialized
             if not initialized:
-                print 'Failed to initialize conduit'
+                logging.warning('Failed to initialize conduit')
 
             logging.info('Sending dummy data (-1000,-1000,-1000)')
             self.mw_conduit.send_data(GAZE_INFO, (-1000, -1000, -1000))
@@ -243,7 +246,7 @@ class CaptureController(object):
         except Exception as e:
             # these are all "nice-to-haves" at this point
             # so don't risk crashing, just yet
-            print("Failed to dump info: %s" % e)
+            logging.warning("Failed to dump info: %s" % e)
             return
 
 
@@ -259,22 +262,26 @@ class CaptureController(object):
         self.acq_thread.start()
 
     def stop_continuous_acquisition(self):
-        print 'Stopping continuous acquisition'
+        logging.info('Stopping continuous acquisition')
         self.continuously_acquiring = 0
-        print "Joining...", self.acq_thread.join()
-        print 'Stopped'
+        self.acq_thread.join()
 
     def ui_queue_put(self, item):
+        if self.ui_queue.full():
+            try:
+                self.ui_queue.get_nowait()
+            except Empty:
+                return
         try:
             self.ui_queue.put_nowait(item)
-        except Full:
+        except queue.Full:
             return
 
     def ui_queue_get(self):
         try:
             f = self.ui_queue.get_nowait()
             return f
-        except Empty:
+        except queue.Empty:
             return None
 
     # for pyro invocation
@@ -342,14 +349,16 @@ class CaptureController(object):
 
                 new_features = self.camera_device.acquire_image()
 
-                if (new_features.__class__ == dict and
-                    features.__class__ == dict and
-                    'frame_number' in new_features and
-                    'frame_number' in features and
-                    new_features['frame_number'] != features['frame_number']):
-                    frame_number += 1
-                else:
-                    next
+                # if (new_features.__class__ == dict and
+                #     features.__class__ == dict and
+                #     'frame_number' in new_features and
+                #     'frame_number' in features and
+                #     new_features['frame_number'] != features['frame_number']):
+                #     frame_number += 1
+                # else:
+                #     next
+
+                frame_number += 1
 
                 features = new_features
 
@@ -358,10 +367,13 @@ class CaptureController(object):
                     frame_rate = check_interval / toc
                     # logging.info('Real frame rate: %f' % (check_interval / toc))
                     # logging.info('Real frame time: %f' % (toc / check_interval))
-                    if features.__class__ == dict and 'frame_number' in features:
-                        logging.info('frame number = %d'
-                                     % features['frame_number'])
+                    # if features.__class__ == dict and 'frame_number' in features:
+                    #     logging.info('frame number = %d'
+                    #                  % features['frame_number'])
+
                     tic = time.time()
+
+                sys.stdout.write('frame rate: %f' % frame_rate)
 
                 if features == None:
                     logging.error('No features found... sleeping')
@@ -536,60 +548,6 @@ class CaptureController(object):
     @roi_offset_y.setter
     def roi_offset_y(self, value):
         self.set_camera_attribute('RegionY', int(value))
-
-    def execute_calibration_step(self, f, wait=False):
-        if self.calibrating:
-            logging.warning('Already calibrating. '
-                            + 'Please wait until the curent step is finished.')
-            return
-        self.calibrating = True
-        self.stop_continuous_acquisition()
-        t = lambda: self.execute_and_resume_acquisition(f)
-        calibrate_thread = threading.Thread(target=t)
-        calibrate_thread.start()
-
-        if wait:
-            calibrate_thread.join()
-
-    def execute_and_resume_acquisition(self, f):
-
-        f(self)
-        print 'Finished calibration step'
-        time.sleep(0.5)
-        self.start_continuous_acquisition()
-        self.read_pos()
-        self.calibrating = False
-
-    def load_calibration_parameters(self, filename):
-        print("Loading: %s" % filename)
-        d = None
-        with open(filename, 'r') as f:
-            d = pkl.load(f)
-
-        if d is None:
-            logging.warning('Error loading calibration file %s' % filename)
-            return False
-
-        candidate_pixels_per_mm = d['pixels_per_mm']
-
-        # check to see if the pixels_per_mm matches up
-        if global_settings.get('check_pixels_per_mm_when_loading', False):
-            logging.warning('CHECKING pixels_per_mm as sanity check')
-            self.execute_calibration_step(lambda x: self.calibrator.center_horizontal(), True)
-            tolerance = global_settings.get('pixels_per_mm_tolerance', 0.01)
-            deviation = (abs(self.calibrator.pixels_per_mm - candidate_pixels_per_mm) / self.calibrator.pixels_per_mm)
-            if  deviation > tolerance:
-                logging.warning('Calibration is not consistent with apparent pixels/mm')
-                logging.warning('(loaded=%f, measured=%f' % (candidate_pixels_per_mm, self.calibrator.pixels_per_mm))
-                logging.warning('deviation=%f, tolerance=%f' % (deviation, tolerance))
-                return False
-            else:
-                logging.warning('Calibration is consistent with apparent pixels/mm')
-                logging.warning('(loaded=%f, measured=%f' % (candidate_pixels_per_mm, self.calibrator.pixels_per_mm))
-                logging.warning('deviation=%f, tolerance=%f' % (deviation, tolerance))
-
-        print d
-        return self.calibrator.load_parameters(d)
 
 
     def go_r(self):

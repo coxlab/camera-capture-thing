@@ -96,9 +96,7 @@ class CaptureGUI:
         self.start_time = None
         self.last_time = 0
         self.last_update_time = time.time()
-        self.update_interval = 1 / 10.
-
-        self.calibration_file = ''
+        self.update_interval = 1 / 10000.
 
         atb.init()
         self.window = glumpy.Window(900, 600)
@@ -348,7 +346,7 @@ class CaptureGUI:
 
         def on_idle(dt):
             self.update_tracker_view()
-            time.sleep(0.05)
+            # time.sleep(0.05)
 
         def on_key_press(symbol, modifiers):
             if symbol == glumpy.key.ESCAPE:
@@ -384,8 +382,8 @@ class CaptureGUI:
             return
 
         now = time.time()
-        if now - self.last_update_time < self.update_interval:
-            return
+        # if now - self.last_update_time < self.update_interval:
+        #     return
 
         self.last_update_time = now
 
@@ -404,71 +402,7 @@ class CaptureGUI:
         else:
             toc = 1
 
-        if self.show_feature_map:
-            transform_im = features['transform']
-            if transform_im is not None:
-                transform_im -= min(ravel(transform_im))
-                transform_im = transform_im * 255 / max(ravel(transform_im))
-                # ravelled = ravel(transform_im)
-                self.tracker_view.im_array = transform_im.astype(uint8)
-        else:
-            self.tracker_view.im_array = features['im_array']
-
-        if 'pupil_position_stage1' in features:
-            self.tracker_view.stage1_pupil_position = \
-                features['pupil_position_stage1']
-
-        if 'cr_position_stage1' in features:
-            self.tracker_view.stage1_cr_position = features['cr_position_stage1'
-                    ]
-
-        if 'cr_radius' in features:
-            self.tracker_view.cr_radius = features['cr_radius']
-
-        if 'pupil_radius' in features:
-            self.tracker_view.pupil_radius = features['pupil_radius']
-
-        if 'pupil_position' in features:
-            self.tracker_view.pupil_position = features['pupil_position']
-
-        if 'cr_position' in features:
-            self.tracker_view.cr_position = features['cr_position']
-
-        if self.display_starburst:
-            self.tracker_view.starburst = features.get('starburst', None)
-        else:
-            self.tracker_view.starburst = None
-
-        self.tracker_view.is_calibrating = features.get('is_calibrating', False)
-
-        self.tracker_view.restrict_top = features.get('restrict_top', None)
-        self.tracker_view.restrict_bottom = features.get('restrict_bottom',
-                None)
-        self.tracker_view.restrict_left = features.get('restrict_left', None)
-        self.tracker_view.restrict_right = features.get('restrict_right', None)
+        self.tracker_view.im_array = features['im_array']
 
         self.window.draw()
 
-        #self.n_frames += 1
-        #self.frame_count += 1
-
-        # time_between_updates = 0.4
-
-        # self.frame_rate_accum += 1. / toc
-
-        # self.frame_rates.append(1. / toc)
-
-        # time_since_last_update = time.time() - self.last_update_time
-
-        # if time_since_last_update > time_between_updates:
-        #     self.last_update_time = time.time()
-
-        #     self.frame_rate = mean(array(self.frame_rates))
-        #     self.frame_rates = []
-        #     self.frame_rate_accum = 0
-
-        #     self.last_time = time.time()
-        #     self.n_frames = 0
-
-        #     if 'sobel_avg' in features:
-        #         self.sobel_avg = features['sobel_avg']

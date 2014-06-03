@@ -291,7 +291,8 @@ public:
     tPvFrame getAndLockCurrentFrame(){
 
         lockReadyFrames();
-        cerr << "Ready: " << ready_frames.size() << " / Queued: " << nqueued << endl;
+
+        // cerr << "Ready: " << ready_frames.size() << " / Queued: " << nqueued << endl;
         while(ready_frames.size() == 0){
             waitForReadyFrames();
             // unlockReadyFrames();
@@ -302,7 +303,12 @@ public:
         }
         
         current_frame = ready_frames.front();
+
+        cerr << "\r[ capture: " << nqueued << " queued | " << ready_frames.size() << " pending | " << current_frame->TimestampLo << "] ";
+
         ready_frames.pop_front();
+
+
         unlockReadyFrames();
 
         return *current_frame;
@@ -325,7 +331,7 @@ public:
         
         if(index){
             queueCameraFrame(index);
-            cerr << "released: " << index << endl;
+            // cerr << "released: " << index << endl;
         }
     }
     
@@ -380,9 +386,6 @@ public:
 
         // cerr << "nqueued: " << nqueued << endl;
         // cerr << "filling frame: " << frame_index << endl;
-
-        cerr.flush();
- 
 
         lockReadyFrames();
         

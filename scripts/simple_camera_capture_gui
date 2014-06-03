@@ -1,25 +1,27 @@
+#!/usr/bin/env python
+
 import Pyro4
 from simple_camera_capture.gui import CaptureGUI
 from threading import Thread
 import sys
+import logging
 
 
 def main():
 
     port = int(sys.argv[1])
 
-    # daemon = Pyro4.Daemon()
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
     ns = Pyro4.locateNS(port=port)
-    # pyro_uri = 'PYRONAME:org.coxlab.camera_capture.controller'
+
     pyro_uri = ns.lookup('org.coxlab.camera_capture.controller')
     controller = Pyro4.Proxy(pyro_uri)
 
     print controller
 
     gui = CaptureGUI(controller)
-
-    # service_daemon_thread = Thread(target=lambda: daemon.requestLoop())
-    # service_daemon_thread.start()
 
     gui.mainloop()
 

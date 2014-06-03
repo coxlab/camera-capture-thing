@@ -11,9 +11,6 @@ use_pyro = True
 
 def main():
 
-
-    import time; time.sleep(30)
-
     port = int(sys.argv[1])
 
     os.environ['CFLAGS'] = '-arch x86_64'
@@ -22,6 +19,7 @@ def main():
     logger.setLevel(logging.INFO)
 
     controller = CaptureController()
+    logging.info('Finished instantiating camera controller')
 
     if use_pyro:
         import Pyro4
@@ -30,6 +28,8 @@ def main():
         daemon = Pyro4.Daemon()
         controller_uri = daemon.register(controller)
         ns = Pyro4.locateNS(port=port)
+
+        logging.info('Registering engine with Pyro name server...')
         ns.register('org.coxlab.camera_capture.controller', controller_uri)
 
 
