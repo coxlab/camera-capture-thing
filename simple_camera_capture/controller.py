@@ -274,12 +274,9 @@ class CaptureController(object):
         interval = now - self.last_ui_put_time
 
         if interval < self.target_ui_update_interval:
-            print "\n", interval
-            print self.target_ui_update_interval
             return
         else:
-            print "\n", interval, "!"
-            # pass
+            pass
 
         if self.ui_queue.full():
             try:
@@ -504,12 +501,10 @@ class CaptureController(object):
 
     @property
     def exposure(self):
-        print 'exposure get'
         return self.get_camera_attribute('ExposureValue')
 
     @exposure.setter
     def exposure(self, value):
-        print 'exposure set'
         self.set_camera_attribute('ExposureValue', int(value))
 
     @property
