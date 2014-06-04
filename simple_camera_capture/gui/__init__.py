@@ -17,6 +17,9 @@ import OpenGL.GLUT as glut
 
 import logging
 
+
+from profilehooks import profile
+
 try:
     from collections import OrderedDict
 except:
@@ -87,8 +90,8 @@ class CaptureGUI:
         self.controller = c
         self.tracker_view = TrackerView()
 
-        self.show_feature_map = c_bool(False)
-        self.display_starburst = c_bool(False)
+        self.gui_frame_rate = 0.0
+
         self.n_frames = 0
         self.frame_count = 0
         self.frame_rate_accum = 0.0
@@ -218,33 +221,31 @@ class CaptureGUI:
                              getter=lambda: c.led_soft_status(2),
                              setter=lambda x: c.led_set_status(2, x))
 
-        #self.led_bar.add_var(
-        #    'Channel3/Ch3_mA',
-        #    target=c,
-        #    attr='IsetCh3',
-        #    label='I Ch3 (mA)',
-        #    setter=lambda x: c.leds.set_current(3,x),
-        #    min=0,
-        #    max=250,
-        #    )
-        # self.led_bar.add_var('Channel3/Ch3_status', label='Ch3 status',
-        #                              vtype=atb.TW_TYPE_BOOL8,
-        #                              getter=lambda: c.leds.soft_status(3),
-        #                              setter=lambda x: c.leds.set_status(3, x))
-        #
-        #         self.led_bar.add_var(
-        #             'Channel4/Ch4_mA',
-        #             target=c,
-        #             attr='IsetCh4',
-        #             label='I Ch4 (mA)',
-        #             setter=lambda x: c.leds.set_current(4,x),
-        #             min=0,
-        #             max=250,
-        #             )
-        #         self.led_bar.add_var('Channel4/Ch4_status', label='Ch4 status',
-        #                              vtype=atb.TW_TYPE_BOOL8,
-        #                              getter=lambda: c.leds.soft_status(4),
-        #                              setter=lambda x: c.leds.set_status(4, x))
+
+        # --------------------------------------------------------------------
+        #   GUI
+        # --------------------------------------------------------------------
+
+        self.gui_bar = atb.Bar(
+            name='GUI',
+            label='GUI',
+            iconified='true',
+            help='GUI Status',
+            position=(60, 60),
+            size=(200, 180),
+            )
+
+
+        self.gui_bar.add_var(
+            'gui_framerate',
+            label='gui frame rate',
+            vtype=atb.TW_TYPE_FLOAT,
+            min=1,
+            max=200,
+            step=0.1,
+            readonly=True,
+            getter=lambda: float(self.gui_frame_rate)
+        )        
 
 
         # --------------------------------------------------------------------
@@ -296,24 +297,24 @@ class CaptureGUI:
 
 
 
-        ExposureMode = atb.enum('ExposureMode', {'manual': 0,
-                                    'auto_once': 1, 'auto': 2})
-        self.cam_bar.add_var('Exposure/mode', label='mode',
-                               vtype=ExposureMode,
-                               getter=lambda: c.get_camera_attribute('ExposureMode'),
-                               setter=lambda x: c.set_camera_attribute('ExposureMode', int(x)))
+        # ExposureMode = atb.enum('ExposureMode', {'manual': 0,
+        #                             'auto_once': 1, 'auto': 2})
+        # self.cam_bar.add_var('Exposure/mode', label='mode',
+        #                        vtype=ExposureMode,
+        #                        getter=lambda: c.get_camera_attribute('ExposureMode'),
+        #                        setter=lambda x: c.set_camera_attribute('ExposureMode', int(x)))
 
 
-        self.cam_bar.add_var(
-            'Exposure/value',
-            label='time (ms)',
-            vtype=atb.TW_TYPE_UINT32,
-            min=1,
-            max=1000,
-            step=1,
-            getter=lambda: c.get_camera_attribute('ExposureValue'),
-            setter=lambda x: c.set_camera_attribute('ExposureValue', int(x)),
-            )
+        # self.cam_bar.add_var(
+        #     'Exposure/value',
+        #     label='time (ms)',
+        #     vtype=atb.TW_TYPE_UINT32,
+        #     min=1,
+        #     max=1000,
+        #     step=1,
+        #     getter=lambda: c.get_camera_attribute('ExposureValue'),
+        #     setter=lambda x: c.set_camera_attribute('ExposureValue', int(x)),
+        #     )
 
         # self.cam_bar.add_var(
         #     'gain',
@@ -426,10 +427,6 @@ class CaptureGUI:
             return
 
         now = time.time()
-        # if now - self.last_update_time < self.update_interval:
-        #     return
-
-        self.last_update_time = now
 
         try:
             features = self.controller.ui_queue_get()
@@ -441,10 +438,10 @@ class CaptureGUI:
         if features is None:
             return
 
-        if 'frame_time' in features:
-            toc = features['frame_time']
-        else:
-            toc = 1
+        self.gui_frame_rate = 1.0 / (now - self.last_update_time)
+
+        self.last_update_time = now
+
 
         self.tracker_view.im_array = features['im_array']
 

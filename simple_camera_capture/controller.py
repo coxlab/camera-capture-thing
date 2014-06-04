@@ -96,7 +96,7 @@ class CaptureController(object):
         self.canvas_update_timer = None
         self.ui_queue = queue.Queue(5)
 
-        self.target_ui_update_interval = 1. / 60.
+        self.target_ui_update_interval = 0.0
         self.last_ui_get_time = time.time()
         self.last_ui_put_time = time.time()
 
