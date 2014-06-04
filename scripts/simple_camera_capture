@@ -28,13 +28,10 @@ echo "Launching Pyro name server..."
 echo ${LAUNCH_NS}
 eval ${LAUNCH_NS} &
 
-sleep 2
-
 echo "Starting capture engine"
 ENGINE="simple_camera_capture_engine $port" # 2> /dev/null"
 eval ${ENGINE} &
 
-sleep 5
 
 echo "Starting GUI"
 GUI="simple_camera_capture_gui $port"

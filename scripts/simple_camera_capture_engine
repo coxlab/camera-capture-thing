@@ -27,7 +27,24 @@ def main():
         Pyro4.config.SERIALIZERS_ACCEPTED.add('pickle')
         daemon = Pyro4.Daemon()
         controller_uri = daemon.register(controller)
-        ns = Pyro4.locateNS(port=port)
+
+        n_retries = 10
+        retry_wait = 0.5
+        ns = None
+
+        for i in range(0, n_retries):
+            try:
+                ns = Pyro4.locateNS(port=port)
+                break
+            except Pyro4.errors.NamingError:
+                # retry
+                logging.info('Looking for name server...')
+                time.sleep(retry_wait)
+
+        if ns is None:
+            logging.error('Unable to connect to name server...')
+            exit(0)
+
 
         logging.info('Registering engine with Pyro name server...')
         ns.register('org.coxlab.camera_capture.controller', controller_uri)

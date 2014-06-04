@@ -273,7 +273,7 @@ class CaptureGUI:
         )        
 
         self.cam_bar.add_var(
-            'binningx',
+            'Binning/binningx',
             label='binning X',
             vtype=atb.TW_TYPE_UINT32,
             min=1,
@@ -284,7 +284,7 @@ class CaptureGUI:
             )
 
         self.cam_bar.add_var(
-            'binningy',
+            'Binning/binningy',
             label='binning Y',
             vtype=atb.TW_TYPE_UINT32,
             min=1,
@@ -292,6 +292,27 @@ class CaptureGUI:
             step=1,
             getter=lambda: c.get_camera_attribute('BinningY'),
             setter=lambda x: c.set_camera_attribute('BinningY', int(x)),
+            )
+
+
+
+        ExposureMode = atb.enum('ExposureMode', {'manual': 0,
+                                    'auto_once': 1, 'auto': 2})
+        self.cam_bar.add_var('Exposure/mode', label='mode',
+                               vtype=ExposureMode,
+                               getter=lambda: c.get_camera_attribute('ExposureMode'),
+                               setter=lambda x: c.set_camera_attribute('ExposureMode', int(x)))
+
+
+        self.cam_bar.add_var(
+            'Exposure/value',
+            label='time (ms)',
+            vtype=atb.TW_TYPE_UINT32,
+            min=1,
+            max=1000,
+            step=1,
+            getter=lambda: c.get_camera_attribute('ExposureValue'),
+            setter=lambda x: c.set_camera_attribute('ExposureValue', int(x)),
             )
 
         # self.cam_bar.add_var(
