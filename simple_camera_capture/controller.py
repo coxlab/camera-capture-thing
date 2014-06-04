@@ -96,7 +96,7 @@ class CaptureController(object):
         self.canvas_update_timer = None
         self.ui_queue = queue.Queue(5)
 
-        self.target_ui_update_interval = 0.0
+        self.target_ui_update_interval = 1 / 30.
         self.last_ui_get_time = time.time()
         self.last_ui_put_time = time.time()
 
@@ -278,29 +278,34 @@ class CaptureController(object):
         else:
             pass
 
-        if self.ui_queue.full():
-            try:
-                self.ui_queue.get_nowait()
-            except Empty:
-                return
+        # if self.ui_queue.full():
+        #     try:
+        #         self.ui_queue.get_nowait()
+        #     except Empty:
+        #         return
         try:
-            self.ui_queue.put_nowait(item)
+            self.ui_queue.put(item)
             self.last_ui_put_time = now
         except queue.Full:
             return
 
     def ui_queue_get(self):
 
-        now = time.time()
-        interval = now - self.last_ui_get_time
+        # now = time.time()
+        # interval = now - self.last_ui_get_time
 
-        if interval < self.target_ui_update_interval:
-            return None
+        # if interval < self.target_ui_update_interval:
+        #     return None
+
+        # try:
+        #     f = self.ui_queue.get_nowait()
+        #     self.last_ui_get_time = now
+        #     return f
+        # except queue.Empty:
+        #     return None
 
         try:
-            f = self.ui_queue.get_nowait()
-            self.last_ui_get_time = now
-            return f
+            return self.ui_queue.get()
         except queue.Empty:
             return None
 

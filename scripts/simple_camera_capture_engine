@@ -6,6 +6,7 @@ from simple_camera_capture.gui import CaptureGUI
 import os
 import logging
 import sys
+import uuid
 
 use_pyro = True
 
@@ -25,8 +26,11 @@ def main():
         import Pyro4
         Pyro4.config.SERIALIZER = 'pickle'
         Pyro4.config.SERIALIZERS_ACCEPTED.add('pickle')
-        daemon = Pyro4.Daemon()
-        controller_uri = daemon.register(controller)
+
+        domain_socket = str(uuid.uuid1())
+
+        daemon = Pyro4.Daemon(unixsocket=domain_socket)
+        controller_uri = daemon.register(controller, domain_socket)
 
         n_retries = 10
         retry_wait = 0.5
