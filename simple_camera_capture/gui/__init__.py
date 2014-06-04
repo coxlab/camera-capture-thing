@@ -18,8 +18,6 @@ import OpenGL.GLUT as glut
 import logging
 
 
-from profilehooks import profile
-
 try:
     from collections import OrderedDict
 except:
