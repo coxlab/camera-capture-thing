@@ -28,7 +28,7 @@ def main():
         Pyro4.config.SERIALIZER = 'pickle'
         Pyro4.config.SERIALIZERS_ACCEPTED.add('pickle')
 
-        domain_socket = str(uuid.uuid1())
+        domain_socket = '/tmp/' + str(uuid.uuid1())
 
         daemon = Pyro4.Daemon(unixsocket=domain_socket)
         controller_uri = daemon.register(controller, domain_socket)
