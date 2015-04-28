@@ -1,0 +1,188 @@
+<html>
+<head>
+    <title>Simple Camera Capture</title>
+    <link href="/kendo/styles/kendo.common.min.css" rel="stylesheet" />
+    <link href="/kendo/styles/kendo.moonlight.min.css" rel="stylesheet" />
+    <link href="/css/style.css" rel="stylesheet" />
+    
+    <!-- <link href="/kendo/styles/kendo.dataviz.min.css" rel="stylesheet" /> -->
+    <!-- <link href="/kendo/styles/kendo.dataviz.default.min.css" rel="stylesheet" /> -->
+    <script src="/kendo/js/jquery.min.js"></script>
+    <script src="/kendo/js/kendo.core.min.js"></script>
+    <script src="/kendo/js/kendo.userevents.min.js"></script>
+    <script src="/kendo/js/kendo.draganddrop.min.js"></script>
+	<script src="/kendo/js/kendo.resizable.min.js"></script>
+    <script src="/kendo/js/kendo.splitter.min.js"></script>
+    <script src="/kendo/js/kendo.data.min.js"></script>
+    <script src="/kendo/js/kendo.tabstrip.min.js"></script>
+    <script src="/kendo/js/kendo.numerictextbox.min.js"></script>
+
+</head>
+
+<body>
+
+	<div id="splitter">
+
+		<div class="left-pane">
+		
+			<canvas id="canvas" class="cameraCanvas"></canvas>
+
+		</div>
+
+		<div class="right-pane">
+
+				<div id="tabstrip">
+
+                    <ul>
+	                	{% for panel_name in ui.panels %}
+		                	{% set panel = ui.panels[panel_name] %}
+
+	                        <li {% if loop.index == 1 %} class="k-state-active" {% endif %} >
+	                        	{{panel.label}}
+	                        </li>
+                        {% endfor %}
+
+                    </ul>
+
+                    {% for panel_name in ui.panels %}
+                    	{% set panel = ui.panels[panel_name] %}
+	                    <div>
+	                    	<dl>
+	                    		{% for el_name in panel.elements %}
+	                    			{% set el = panel.elements[el_name] %}
+		                    		<dt>
+		                    			{{ el.label }}
+		                    		</dt>
+		                    		<dd>
+		                    			<input id="{{panel.name}}-{{el.name}}"
+		                    				data-endpoint="{{ui.name}}/{{panel.name}}/{{el.name}}"
+		                    				class="numeric parameter"
+		                    				type="number"
+		                    				value="{{ el.default }}"
+		                    				min="{{ el.min }}"
+		                    				max="{{ el.max }}"
+		                    				step="{{ el.step }}"/>
+		                    		</dd>
+	                    		{% endfor %}
+	                    	</dl>
+
+	                    </div>
+
+                    {% endfor %}
+                
+                </div>
+		</div>
+	</div>
+	
+	 <script type="text/javascript">
+
+	 		// Kendo setup
+
+	 		$(document).ready(function() {
+	            $("#splitter").kendoSplitter({
+	                orientation: "horizontal",
+	                panes: [
+	                    { collapsible: false },
+	                    { collapsible: false, size: "600px" },
+	                    { collapsible: false, resizable: false, size: "200px" }
+	                ]
+	            });
+
+	            $("#tabstrip").kendoTabStrip({
+                        animation:  {
+                            open: {
+                                effects: "fadeIn"
+                            }
+                        }
+                });
+
+                function ajaxUpdate(){
+		    		endpoint = $(this).data('endpoint')
+		    		$.ajax(endpoint, {type: 'PUT', data: {value: this.value}})	
+		    	}
+
+                $(".numeric").kendoNumericTextBox({
+                	change: ajaxUpdate,
+                	spin: ajaxUpdate
+                });
+
+
+
+		    });
+
+
+	 		// A Kludge
+	 		function fitToContainer(canvas){
+			  canvas.style.width='100%';
+			  // canvas.style.height='100%';
+			  // canvas.width  = canvas.offsetWidth;
+			  // canvas.height = canvas.offsetHeight;
+			  canvas.width = 164;
+			  canvas.height = 122;
+			}
+
+
+			// var buf = new ArrayBuffer(122*164);
+			// var bufView = new Uint8Array(buf);
+			canvas = document.getElementById('canvas')
+
+			fitToContainer(canvas);
+
+	 		var ctx = canvas.getContext('2d')
+
+	 		{% for img_src in ui.image_sources %}
+
+	 			ws_address = 'ws://localhost:8000/{{ui.name}}/image_source/{{img_src}}'
+	 			console.log('Opening websocket at ' + ws_address)
+		 		connection = new WebSocket(ws_address)
+		 		// connection = new WebSocket('ws://localhost:8000/imgsrc');
+		 		connection.binaryType = 'arraybuffer';
+
+
+		 		function onopen(){
+		 			console.log("It's OPEN");
+		 			connection.send("blah")
+
+		 		}
+
+		 		function onmessage(evt){
+
+		 			blob = evt.data;
+		 			// for (var i=0, strLen=blob.length; i<strLen; i++) {
+				  //   	// bufView[i] = blob.charCodeAt(i);
+				  //   	bufView[i] = blob[i]
+				  // 	}
+
+				  	bufView = new Uint8ClampedArray(blob);
+
+		 			var idata = ctx.createImageData(164, 122)
+
+		 			idata.data.set(bufView)
+		 			// for (var i=0; i < idata.length; i++){
+		 			// 	idata.data[i] = bufView[i]
+		 			// }
+
+		 			// console.log(idata.data[0] + ' ' + idata.data[1] + ' ' + idata.data[2] + ' ' + idata.data[3])
+
+		 			ctx.putImageData(idata, 0, 0);
+
+		 		}
+
+		 		function onclose(){
+		 			console.log("It's CLOSED");
+		 		}
+
+		 		connection.onopen = onopen;
+		 		connection.onmessage = onmessage;
+		 		connection.onclose = onclose;
+
+		 	{% endfor %}
+
+	 </script>
+
+  </body>
+</html>
+
+
+  </body>
+</html>
